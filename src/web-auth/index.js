@@ -384,22 +384,28 @@ WebAuth.prototype.signupAndAuthorize = function (options, cb) {
  * @param {String} options.username username
  * @param {String} options.email email
  * @param {String} options.password user password
+ * @param {String} options.realm realm
  * @see   {@link https://auth0.com/docs/api/authentication#login}
  */
 WebAuth.prototype.login = function (options) {
   var _this = this;
   var url = urljoin(this.baseOptions.rootUrl, '/co/authenticate');
   var authenticateBody = {
-    client_id: this.baseOptions.clientID || options.clientID,
+    client_id: options.clientID || this.baseOptions.clientID,
     credential_type: 'password',
     username: options.username || options.email,
     password: options.password
   };
+  var realm = options.realm || this.baseOptions.realm;
+  if (realm) {
+    authenticateBody.realm = realm;
+    authenticateBody.credential_type = 'http://auth0.com/oauth/grant-type/password-realm';
+  }
   this.request.post(url).withCredentials().send(authenticateBody).end(function (err, data) {
     if (err) {
       var redirectUrl = _this.baseOptions.redirectUri || options.redirectUri;
       var errorHash = '#error=' + err.response.error + '&error_description=' + encodeURI(err.response.error_description);
-      return windowHelper.redirect(redirectUrl + errorHash);;
+      return windowHelper.redirect(redirectUrl + errorHash);
     }
     options = objectHelper.blacklist(options, ['username', 'password']);
     var authorizeOptions = objectHelper.merge(options).with({ loginTicket: data.body.login_ticket });

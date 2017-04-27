@@ -186,7 +186,6 @@
       domain: 'luisrudge-auth0-au.au.auth0.com',
       redirectUri: 'http://localhost:3000/example',
       clientID: 'gPjLXENRzOnYVA0aPgwQ3jPt0cWGYs7j',
-      audience: 'https://luisrudge-auth0-au.au.auth0.com/userinfo',
       responseType: 'token',
       plugins: [
         new CordovaAuth0Plugin()
@@ -353,7 +352,7 @@
       webAuth.login({
         username: 'test@example.com',
         password: 'test',
-        redirectURI: 'http://localhost:3000/example/callback.html'
+        redirectURI: 'http://localhost:3000/example/'
       });
     });
     $(document.body).append($('<div class="loaded">LOADED</div>'));

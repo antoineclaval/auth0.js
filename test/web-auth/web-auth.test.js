@@ -797,6 +797,9 @@ describe('auth0.WebAuth', function () {
 
     afterEach(function () {
       request.post.restore();
+      if (this.auth0.authorize.restore) {
+        this.auth0.authorize.restore();
+      }
     });
 
     it('should call /co/authenticate and redirect to /authorize with login_ticket', function (done) {
@@ -832,6 +835,42 @@ describe('auth0.WebAuth', function () {
         username: 'me@example.com',
         password: '123456',
         anotherOption: 'foobar'
+      });
+    });
+    it('should call /co/authenticate with realm grant and redirect to /authorize with login_ticket when realm is used', function (done) {
+      stub(request, 'post', function (url) {
+        if (url !== 'https://me.auth0.com/co/authenticate') {
+          throw new Error('Invalid url in request post stub');
+        }
+        return new RequestMock({
+          body: {
+            client_id: '...',
+            credential_type: 'http://auth0.com/oauth/grant-type/password-realm',
+            username: 'me@example.com',
+            password: '123456',
+            realm: 'a-connection'
+          },
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          cb: function(cb) {
+            cb(null, {
+              body: {
+                login_ticket: 'a_login_ticket'
+              }
+            });
+          }
+        });
+      });
+      stub(this.auth0, 'authorize', function(options) {
+        expect(options).to.be.eql({ realm: 'a-connection', loginTicket: 'a_login_ticket' });
+        done();
+      });
+
+      this.auth0.login({
+        username: 'me@example.com',
+        password: '123456',
+        realm: 'a-connection'
       });
     });
     it('should call /co/authenticate and redirect to options.redirectUri when an error occur', function (done) {
