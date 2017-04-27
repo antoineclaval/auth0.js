@@ -11,6 +11,7 @@ var RequestMock = require('../mock/request-mock');
 var TransactionManager = require('../../src/web-auth/transaction-manager');
 var SilentAuthenticationHandler = require('../../src/web-auth/silent-authentication-handler');
 var WebAuth = require('../../src/web-auth');
+var windowHelper = require('../../src/helper/window');
 
 describe('auth0.WebAuth', function () {
   context('nonce validation', function () {
@@ -649,7 +650,7 @@ describe('auth0.WebAuth', function () {
     });
   });
 
-  context('signup and login', function () {
+  context('signup', function () {
     before(function () {
       this.auth0 = new WebAuth({
         domain: 'me.auth0.com',
@@ -780,6 +781,93 @@ describe('auth0.WebAuth', function () {
           "statusCode":400
         });
         done();
+      });
+    });
+  });
+  context('login', function () {
+    before(function () {
+      this.auth0 = new WebAuth({
+        domain: 'me.auth0.com',
+        clientID: '...',
+        redirectUri: 'http://page.com/callback',
+        responseType: 'token',
+        _sendTelemetry: false
+      });
+    });
+
+    afterEach(function () {
+      request.post.restore();
+    });
+
+    it('should call /co/authenticate and redirect to /authorize with login_ticket', function (done) {
+      stub(request, 'post', function (url) {
+        if (url !== 'https://me.auth0.com/co/authenticate') {
+          throw new Error('Invalid url in request post stub');
+        }
+        return new RequestMock({
+          body: {
+            client_id: '...',
+            credential_type: 'password',
+            username: 'me@example.com',
+            password: '123456'
+          },
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          cb: function(cb) {
+            cb(null, {
+              body: {
+                login_ticket: 'a_login_ticket'
+              }
+            });
+          }
+        });
+      });
+      stub(this.auth0, 'authorize', function(options) {
+        expect(options).to.be.eql({ loginTicket: 'a_login_ticket', anotherOption: 'foobar' });
+        done();
+      });
+
+      this.auth0.login({
+        username: 'me@example.com',
+        password: '123456',
+        anotherOption: 'foobar'
+      });
+    });
+    it('should call /co/authenticate and redirect to options.redirectUri when an error occur', function (done) {
+      stub(request, 'post', function (url) {
+        if (url !== 'https://me.auth0.com/co/authenticate') {
+          throw new Error('Invalid url in request post stub');
+        }
+        return new RequestMock({
+          body: {
+            client_id: '...',
+            credential_type: 'password',
+            username: 'me@example.com',
+            password: '123456'
+          },
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          cb: function(cb) {
+            cb({
+              response: {
+                error: 'Ops',
+                error_description: 'Something happened'
+              }
+            });
+          }
+        });
+      });
+      stub(windowHelper, 'redirect', function (url) {
+        expect(url).to.be.equal('http://page.com/callback#error=Ops&error_description=Something%20happened');
+        done();
+      });
+
+      this.auth0.login({
+        username: 'me@example.com',
+        password: '123456',
+        anotherOption: 'foobar'
       });
     });
   });

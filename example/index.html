@@ -160,7 +160,10 @@
           <h2>Renew authentication:</h2>
           <input type="button" class="renew-auth" value="Renew" />
         </div>
-
+        <div>
+          <h2>Login with new Login Ticket flow:</h2>
+          <input type="button" class="login-ticket" value="Login" />
+        </div>
         <div>
           <h2>SSO Logout:</h2>
           <input type="button" class="logout" value="Logout" />
@@ -180,10 +183,10 @@
     });
 
     var webAuth = new auth0.WebAuth({
-      domain: 'brucke.auth0.com',
+      domain: 'luisrudge-auth0-au.au.auth0.com',
       redirectUri: 'http://localhost:3000/example',
-      clientID: 'k5u3o2fiAA8XweXEEX604KCwCjzjtMU6',
-      audience: 'https://brucke.auth0.com/userinfo',
+      clientID: 'gPjLXENRzOnYVA0aPgwQ3jPt0cWGYs7j',
+      audience: 'https://luisrudge-auth0-au.au.auth0.com/userinfo',
       responseType: 'token',
       plugins: [
         new CordovaAuth0Plugin()
@@ -191,9 +194,9 @@
     });
 
     var webAuthPasswordless = new auth0.WebAuth({
-      domain: 'brucke.auth0.com',
+      domain: 'luisrudge-auth0-au.au.auth0.com',
       redirectUri: 'http://localhost:3000/example',
-      clientID: 'k5u3o2fiAA8XweXEEX604KCwCjzjtMU6',
+      clientID: 'gPjLXENRzOnYVA0aPgwQ3jPt0cWGYs7j',
       responseType: 'token'
     });
 
@@ -344,6 +347,14 @@
       },
         htmlConsole.dumpCallback.bind(htmlConsole)
       );
+    });
+    $('.login-ticket').click(function (e) {
+      e.preventDefault();
+      webAuth.login({
+        username: 'test@example.com',
+        password: 'test',
+        redirectURI: 'http://localhost:3000/example/callback.html'
+      });
     });
     $(document.body).append($('<div class="loaded">LOADED</div>'));
     </script>
